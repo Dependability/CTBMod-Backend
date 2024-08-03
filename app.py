@@ -80,4 +80,4 @@ def unlock():
             emit("unlock", {"locked": False, "password": "test-password"}, json=True, to=computerType) #Use the past password]
     
 if __name__ == "__main__":
-    socketio.run(app,debug = True)
+    socketio.run(app)
