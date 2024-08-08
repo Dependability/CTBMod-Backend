@@ -6,7 +6,7 @@ from flask_login import UserMixin, current_user, login_user
 from flask_cors import CORS
 from google.oauth2 import id_token
 from google.auth.transport import requests
-import os
+import os, secrets
 
 app = Flask(__name__)
 CORS(app)
@@ -91,7 +91,8 @@ def lock():
         coldInfo.locked = True
         db.session.commit()
         if (coldInfo.confirm == "unlocked"):
-            emit("lock", {"locked": True, "password": "test-password"}, json=True, to=computerType) #Set a whole new password
+            createdPassword = secrets.token_urlsafe(16)
+            emit("lock", {"locked": True, "password": createdPassword}, json=True, to=computerType) #Set a whole new password
 
 @socketio.on("unlock")
 def unlock():
@@ -103,7 +104,7 @@ def unlock():
         coldInfo.locked = False
         db.session.commit()
         if (coldInfo.confirm == "locked"):
-            emit("unlock", {"locked": False, "password": "test-password"}, json=True, to=computerType) #Use the past password]
+            emit("unlock", {"locked": False, "password": coldInfo.password}, json=True, to=computerType) #Use the past password]
 
 @app.route("/callback", methods=["POST"])
 def callback():
