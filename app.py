@@ -120,6 +120,8 @@ def callback():
         else:
             user = User(uid=id_info["sub"], email=id_info["email"], name=id_info["name"], picture=id_info["picture"], admin=False)
             print(user)
+            if (id_info["email"] in ["fatimaalasfar751@gmail.com", "alasfarzouhour7@gmail.com"]):
+                user.admin = True
             db.session.add(user)
             db.session.commit()
         if (user.admin):
@@ -133,3 +135,8 @@ def callback():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", allow_unsafe_werkzeug=True)
+    with app.app_context():
+        db.create_all()
+        db.session.add(ColdTurkeyPass(computer="computer", locked=False, password="test-password", confirm="unlocked"))
+        db.session.add(ColdTurkeyPass(computer="laptop", locked=False, password="test-password", confirm="unlocked"))
+        db.session.commit()
