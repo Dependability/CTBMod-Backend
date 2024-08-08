@@ -60,9 +60,9 @@ def on_join(data):
         print(room)
         info = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=room)).scalar_one_or_none()
         if (info.locked and info.confirm == "unlocked"):
-            emit("lock", {"locked": True, "password": "test-password"}, json=True, to=room) #Set a whole new password
+            emit("lock", {"locked": True, "password": info["password"]}, json=True, to=room) #Set a whole new password
         elif (info.locked == False and info.confirm == "locked"):
-            emit("unlock", {"locked": False, "password": "test-password"}, json=True, to=room) #Use the past password
+            emit("unlock", {"locked": False, "password": info["password"]}, json=True, to=room) #Use the past password
     else:
         info = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer="laptop")).scalar_one_or_none()
         if (info.locked):
