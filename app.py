@@ -1,4 +1,5 @@
 import functools
+from threading import Timer
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, disconnect, join_room, emit
@@ -14,8 +15,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
 
 
+
 db = SQLAlchemy(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+currentTimer = None
 
 class ColdTurkeyPass(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,30 +85,43 @@ def confirmLock(data):
 
 @socketio.on("lock")
 def lock():
-    
     #Broadcast to all phones, and to all the computer types
     emit("lock", {"locked": True},json=True, to="phone")
     #Check if computer is defintely unlocked
-    for (computerType) in ["computer", "laptop"]:
-        coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
-        coldInfo.locked = True
-        db.session.commit()
-        if (coldInfo.confirm == "unlocked"):
-            createdPassword = secrets.token_urlsafe(16)
-            emit("lock", {"locked": True, "password": createdPassword}, json=True, to=computerType) #Set a whole new password
+
+    #Set a timer for 3 seconds, if timer is active, then replace it.
+    def sendToClients():
+        for (computerType) in ["computer", "laptop"]:
+            coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
+            coldInfo.locked = True
+            db.session.commit()
+            if (coldInfo.confirm == "unlocked"):
+                createdPassword = secrets.token_urlsafe(16)
+                emit("lock", {"locked": True, "password": createdPassword}, json=True, to=computerType) #Set a whole new password
+    if (currentTimer):
+        currentTimer.cancel()
+    currentTimer = Timer(5, sendToClients)
+    currentTimer.start()
+        
 
 @socketio.on("unlock")
 def unlock():
     #Broadcast to all phones, and to all the computer types
     emit("unlock", {"locked": False},json=True, to="phone")
     #Check if computer is defintely unlocked
-    for (computerType) in ["computer", "laptop"]:
-        coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
-        coldInfo.locked = False
-        db.session.commit()
-        if (coldInfo.confirm == "locked"):
-            emit("unlock", {"locked": False, "password": coldInfo.password}, json=True, to=computerType) #Use the past password]
 
+    def sendToClients():
+        for (computerType) in ["computer", "laptop"]:
+            coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
+            coldInfo.locked = False
+            db.session.commit()
+            if (coldInfo.confirm == "locked"):
+                emit("unlock", {"locked": False, "password": coldInfo.password}, json=True, to=computerType) #Use the past password]
+    if (currentTimer):
+        currentTimer.cancel()
+    currentTimer = Timer(5, sendToClients)
+    currentTimer.start()
+    
 @app.route("/callback", methods=["POST"])
 def callback():
     body = request.json
@@ -120,7 +136,7 @@ def callback():
         else:
             user = User(uid=id_info["sub"], email=id_info["email"], name=id_info["name"], picture=id_info["picture"], admin=False)
             print(user)
-            if (id_info["email"] in ["fatimaalasfar751@gmail.com", "alasfarzouhour7@gmail.com"]):
+            if (id_info["email"] in ["fatimaalasfar751@gmail.com", "alasfarzouhour7@gmail.com", "alasfartimey@gmail.com"]):
                 user.admin = True
             db.session.add(user)
             db.session.commit()
