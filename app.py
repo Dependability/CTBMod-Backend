@@ -91,13 +91,14 @@ def lock():
 
     #Set a timer for 3 seconds, if timer is active, then replace it.
     def sendToClients():
-        for (computerType) in ["computer", "laptop"]:
-            coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
-            coldInfo.locked = True
-            db.session.commit()
-            if (coldInfo.confirm == "unlocked"):
-                createdPassword = secrets.token_urlsafe(16)
-                emit("lock", {"locked": True, "password": createdPassword}, json=True, to=computerType) #Set a whole new password
+        with app.app_context():
+            for (computerType) in ["computer", "laptop"]:
+                    coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
+                    coldInfo.locked = True
+                    db.session.commit()
+                    if (coldInfo.confirm == "unlocked"):
+                        createdPassword = secrets.token_urlsafe(16)
+                        emit("lock", {"locked": True, "password": createdPassword}, json=True, to=computerType) #Set a whole new password
     global currentTimer
     if (currentTimer):
         currentTimer.cancel()
@@ -112,12 +113,13 @@ def unlock():
     #Check if computer is defintely unlocked
 
     def sendToClients():
-        for (computerType) in ["computer", "laptop"]:
-            coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
-            coldInfo.locked = False
-            db.session.commit()
-            if (coldInfo.confirm == "locked"):
-                emit("unlock", {"locked": False, "password": coldInfo.password}, json=True, to=computerType) #Use the past password]
+        with app.app_context():
+            for (computerType) in ["computer", "laptop"]:
+                coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
+                coldInfo.locked = False
+                db.session.commit()
+                if (coldInfo.confirm == "locked"):
+                    emit("unlock", {"locked": False, "password": coldInfo.password}, json=True, to=computerType) #Use the past password]
     global currentTimer
     if (currentTimer):
         currentTimer.cancel()
