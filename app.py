@@ -57,15 +57,28 @@ def onConnect(auth):
 
 @socketio.on('join')
 def on_join(data):
+    global currentTimer
+    def sendToClient(socketio, app):
+        with app.app_context():
+            for (computerType) in ["computer", "laptop"]:
+                coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
+                lock = coldInfo['locked']
+                password = coldInfo['password']
+                confirm = coldInfo['confirm']
+                if (lock and confirm == "unlocked"):
+                    password = secrets.token_urlsafe(16)
+                    socketio.emit(lock, {"locked": lock, "password": password}, to=computerType) #Set a whole new password
+                elif ((not lock) and confirm == "locked"):
+                    socketio.emit(lock, {"locked": lock, "password": password}, to=computerType)
+
     room = data["room"]
     join_room(room)
     if (room == "computer" or room == "laptop"):
         print(room)
-        info = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=room)).scalar_one_or_none()
-        if (info.locked and info.confirm == "unlocked"):
-            emit("lock", {"locked": True, "password": info["password"]}, json=True, to=room) #Set a whole new password
-        elif (info.locked == False and info.confirm == "locked"):
-            emit("unlock", {"locked": False, "password": info["password"]}, json=True, to=room) #Use the past password
+        if (currentTimer):
+            currentTimer.cancel()
+        currentTimer = Timer(3, sendToClient, [socketio, info.locked, room, info.password])
+        currentTimer.start()
     else:
         info = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer="laptop")).scalar_one_or_none()
         if (info.locked):
@@ -102,7 +115,7 @@ def lock():
     global currentTimer
     if (currentTimer):
         currentTimer.cancel()
-    currentTimer = Timer(5, sendToClients)
+    currentTimer = Timer(3, sendToClients)
     currentTimer.start()
         
 
@@ -123,7 +136,7 @@ def unlock():
     global currentTimer
     if (currentTimer):
         currentTimer.cancel()
-    currentTimer = Timer(5, sendToClients)
+    currentTimer = Timer(3, sendToClients)
     currentTimer.start()
 
 @app.route("/callback", methods=["POST"])
@@ -155,8 +168,3 @@ def callback():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", allow_unsafe_werkzeug=True)
-    with app.app_context():
-        db.create_all()
-        db.session.add(ColdTurkeyPass(computer="computer", locked=False, password="test-password", confirm="unlocked"))
-        db.session.add(ColdTurkeyPass(computer="laptop", locked=False, password="test-password", confirm="unlocked"))
-        db.session.commit()
