@@ -121,7 +121,7 @@ def unlock():
         currentTimer.cancel()
     currentTimer = Timer(5, sendToClients)
     currentTimer.start()
-    
+
 @app.route("/callback", methods=["POST"])
 def callback():
     body = request.json
@@ -136,7 +136,7 @@ def callback():
         else:
             user = User(uid=id_info["sub"], email=id_info["email"], name=id_info["name"], picture=id_info["picture"], admin=False)
             print(user)
-            if (id_info["email"] in ["fatimaalasfar751@gmail.com", "alasfarzouhour7@gmail.com", "alasfartimey@gmail.com"]):
+            if (id_info["email"] in ["fatimaalasfar751@gmail.com", "alasfarzouhour7@gmail.com", "alasfartimey@gmail.com", "robloxplayer307@gmail.com"]):
                 user.admin = True
             db.session.add(user)
             db.session.commit()
