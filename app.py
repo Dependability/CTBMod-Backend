@@ -98,6 +98,7 @@ def lock():
             if (coldInfo.confirm == "unlocked"):
                 createdPassword = secrets.token_urlsafe(16)
                 emit("lock", {"locked": True, "password": createdPassword}, json=True, to=computerType) #Set a whole new password
+    global currentTimer
     if (currentTimer):
         currentTimer.cancel()
     currentTimer = Timer(5, sendToClients)
@@ -117,6 +118,7 @@ def unlock():
             db.session.commit()
             if (coldInfo.confirm == "locked"):
                 emit("unlock", {"locked": False, "password": coldInfo.password}, json=True, to=computerType) #Use the past password]
+    global currentTimer
     if (currentTimer):
         currentTimer.cancel()
     currentTimer = Timer(5, sendToClients)
