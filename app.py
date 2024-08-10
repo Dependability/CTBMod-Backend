@@ -71,9 +71,9 @@ def on_join(data):
         with app.app_context():
             for (computerType) in ["computer", "laptop"]:
                 coldInfo = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer=computerType)).scalar_one_or_none()
-                lock = coldInfo['locked']
-                password = coldInfo['password']
-                confirm = coldInfo['confirm']
+                lock = coldInfo.locked
+                password = coldInfo.password
+                confirm = coldInfo.confirm
                 if (lock and confirm == "unlocked"):
                     password = secrets.token_urlsafe(16)
                     socketio.emit(lock, {"locked": lock, "password": password}, to=computerType) #Set a whole new password
