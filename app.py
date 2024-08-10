@@ -76,9 +76,9 @@ def on_join(data):
                 confirm = coldInfo.confirm
                 if (lock and confirm == "unlocked"):
                     password = secrets.token_urlsafe(16)
-                    socketio.emit(lock, {"locked": lock, "password": password}, to=computerType) #Set a whole new password
+                    socketio.emit("lock", {"locked": lock, "password": password}, to=computerType) #Set a whole new password
                 elif ((not lock) and confirm == "locked"):
-                    socketio.emit(lock, {"locked": lock, "password": password}, to=computerType)
+                    socketio.emit("unlock", {"locked": lock, "password": password}, to=computerType)
 
     room = data["room"]
     join_room(room)
