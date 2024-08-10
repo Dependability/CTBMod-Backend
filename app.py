@@ -86,7 +86,7 @@ def on_join(data):
         print(room)
         if (currentTimer):
             currentTimer.cancel()
-        currentTimer = Timer(3, sendToClient, [socketio, info.locked, room, info.password])
+        currentTimer = Timer(3, sendToClient, [socketio, app])
         currentTimer.start()
     else:
         info = db.session.execute(db.select(ColdTurkeyPass).filter_by(computer="laptop")).scalar_one_or_none()
