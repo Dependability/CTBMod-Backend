@@ -37,6 +37,15 @@ class User(db.Model, UserMixin):
     admin = db.Column(db.Boolean, default=False, nullable=False)
     robloxPic = db.Column(db.String(312))
 
+robloxTable = {
+    "alasfartimey@gmail.com" : {"picture": "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-AE8B6841F37258AB0AA856C1597C918B-Png/150/150/AvatarHeadshot/Webp/noFilter", "realName": "Timey"},
+    "alasfarzouhour7@gmail.com" : {"picture": "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-0AC9DA3F66D63F3DFFF7C80F7DFDD46A-Png/150/150/AvatarHeadshot/Webp/noFilter", "realName": "Zuzu"},
+    "fatimaalasfar751@gmail.com" : {"picture": "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-6E87FD7E0B40FC2B9DBB6DDF4BD62BEB-Png/150/150/AvatarHeadshot/Webp/noFilter", "realName": "Timer"},
+    "robloxplayer307@gmail.com" : {"picture": "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-0570A1C4880EA0930A7B5A5897344304-Png/150/150/AvatarHeadshot/Webp/noFilter", "realName": "King"},
+}
+
+adminList = ["alasfartimey@gmail.com", "alasfarzouhour7@gmail.com", "fatimaalasfar751@gmail.com", "robloxplayer307@gmail.com"]
+
 
 def checkAdmin(token):
     try:
@@ -97,9 +106,9 @@ def confirmLock(data):
     db.session.commit()
 
 @socketio.on("lock")
-def lock():
+def lock(data):
     #Broadcast to all phones, and to all the computer types
-    emit("lock", {"locked": True},json=True, to="phone")
+    emit("lock", {"locked": True, "user": data["user"]},json=True, to="phone")
     #Check if computer is defintely unlocked
 
     #Set a timer for 3 seconds, if timer is active, then replace it.
@@ -120,9 +129,9 @@ def lock():
         
 
 @socketio.on("unlock")
-def unlock():
+def unlock(data):
     #Broadcast to all phones, and to all the computer types
-    emit("unlock", {"locked": False},json=True, to="phone")
+    emit("unlock", {"locked": False, "user": data["user"]},json=True, to="phone")
     #Check if computer is defintely unlocked
 
     def sendToClients():
@@ -153,12 +162,16 @@ def callback():
         else:
             user = User(uid=id_info["sub"], email=id_info["email"], name=id_info["name"], picture=id_info["picture"], admin=False)
             print(user)
-            if (id_info["email"] in ["fatimaalasfar751@gmail.com", "alasfarzouhour7@gmail.com", "alasfartimey@gmail.com", "robloxplayer307@gmail.com"]):
+            if (id_info["email"] in robloxTable):
+                robloxInfo = robloxTable[id_info["email"]]
+                user.realName = robloxInfo["realName"]
+                user.robloxPic = robloxInfo["picture"]
+            if (id_info["email"] in adminList):
                 user.admin = True
             db.session.add(user)
             db.session.commit()
         if (user.admin):
-            return {"image" : id_info["picture"], "name": id_info["name"], "idToken": token} 
+            return {"image" : id_info["picture"], "name": id_info["name"], "idToken": token, "rblxname": user.realName, "rblxpic": user.robloxPic} 
         return {"message": "invalid request, you are not admin"}, 403
 
         #if admin, return, otherwise, this is invalid
