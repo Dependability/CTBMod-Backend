@@ -44,7 +44,7 @@ robloxTable = {
     "robloxplayer307@gmail.com" : {"picture": "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-0570A1C4880EA0930A7B5A5897344304-Png/150/150/AvatarHeadshot/Webp/noFilter", "realName": "King"},
 }
 
-adminList = ["alasfartimey@gmail.com", "alasfarzouhour7@gmail.com", "fatimaalasfar751@gmail.com", "robloxplayer307@gmail.com"]
+adminList = ["alasfartimey@gmail.com", "alasfarzouhour7@gmail.com", "fatimaalasfar751@gmail.com"]
 
 
 def checkAdmin(token):
